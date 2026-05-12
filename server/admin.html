@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<title>作品集后台 · 肖奕堃</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+         margin: 0; background: #f5f5f7; color: #1d1d1f; }
+  .top { display:flex; justify-content:space-between; align-items:center;
+         padding: 14px 24px; background:#fff; border-bottom:1px solid #e5e5ea;
+         position:sticky; top:0; z-index:10; }
+  .top h1 { font-size:18px; margin:0; }
+  .btn { border:0; border-radius:8px; padding:8px 16px; cursor:pointer;
+         font-size:14px; background:#0071e3; color:#fff; }
+  .btn:hover { background:#0077ed; }
+  .btn.gray { background:#e5e5ea; color:#1d1d1f; }
+  .btn.red  { background:#ff3b30; color:#fff; }
+  .btn.green{ background:#34c759; color:#fff; }
+  .wrap { max-width: 1100px; margin: 24px auto; padding: 0 24px; }
+  .card { background:#fff; border:1px solid #e5e5ea; border-radius:14px;
+          padding:18px; margin-bottom:16px; }
+  .row { display:flex; gap:12px; flex-wrap:wrap; }
+  label { font-size:12px; color:#6e6e73; display:block; margin-bottom:4px; }
+  input, select, textarea {
+    width:100%; padding:8px 10px; font-size:14px;
+    border:1px solid #d2d2d7; border-radius:8px; background:#fff;
+    font-family:inherit;
+  }
+  textarea { min-height:80px; resize:vertical; }
+  .field { flex:1; min-width:180px; margin-bottom:10px; }
+  .field.full { flex:1 0 100%; }
+  .gallery { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+  .thumb { position:relative; width:90px; height:90px; border-radius:8px;
+           overflow:hidden; border:1px solid #d2d2d7; background:#000; }
+  .thumb img { width:100%; height:100%; object-fit:cover; }
+  .thumb .x { position:absolute; top:2px; right:2px; background:rgba(0,0,0,.6);
+              color:#fff; border:0; width:20px; height:20px; border-radius:50%;
+              cursor:pointer; font-size:12px; }
+  .img-picker { display:flex; flex-wrap:wrap; gap:6px; max-height:240px;
+                overflow-y:auto; padding:8px; background:#fafafa;
+                border:1px solid #e5e5ea; border-radius:8px; }
+  .img-picker .pick { width:64px; height:64px; cursor:pointer; border-radius:6px;
+                      overflow:hidden; border:2px solid transparent; }
+  .img-picker .pick.active { border-color:#0071e3; }
+  .img-picker .pick img { width:100%; height:100%; object-fit:cover; }
+  .login { max-width:380px; margin:120px auto; }
+  .toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%);
+           background:#1d1d1f; color:#fff; padding:10px 20px; border-radius:24px;
+           font-size:14px; z-index:99; opacity:0; transition:opacity .2s; }
+  .toast.show { opacity:1; }
+  .log { background:#1d1d1f; color:#86efac; padding:14px; border-radius:8px;
+         white-space:pre-wrap; font-family:monospace; font-size:12px;
+         max-height:300px; overflow:auto; }
+  .item-head { display:flex; justify-content:space-between; align-items:center;
+               margin-bottom:10px; }
+  .item-head h3 { margin:0; font-size:16px; }
+  .muted { color:#6e6e73; font-size:12px; }
+  details summary { cursor:pointer; font-weight:600; }
+</style>
+</head>
+<body>
+
+<!-- 登录 -->
+<div id="loginPage" class="login card" style="display:none">
+  <h2 style="margin-top:0">作品集后台</h2>
+  <p class="muted">请输入管理密码</p>
+  <input id="pwd" type="password" placeholder="密码" />
+  <div style="height:10px"></div>
+  <button class="btn" onclick="login()">登录</button>
+</div>
+
+<!-- 主界面 -->
+<div id="mainPage" style="display:none">
+  <div class="top">
+    <h1>🎨 作品集后台</h1>
+    <div>
+      <button class="btn gray" onclick="addProject()">+ 新增作品</button>
+      <button class="btn" onclick="save()">💾 保存到本地</button>
+      <button class="btn green" onclick="publish()">🚀 发布到 GitHub</button>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div id="list"></div>
+
+    <div id="logCard" class="card" style="display:none">
+      <h3>发布日志</h3>
+      <pre id="log" class="log"></pre>
+    </div>
+
+    <p class="muted" style="text-align:center">
+      💡 编辑后先点「保存到本地」，再点「发布到 GitHub」自动 build + push
+    </p>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+let token = localStorage.getItem('admin_token') || ''
+let projects = []
+let images = []
+
+const SURFACES = ['light', 'parchment', 'dark', 'dark-2', 'dark-3']
+const CATEGORIES = [
+  { v: 'lighting',  l: '环境灯光' },
+  { v: 'relight',   l: '重打光练习' },
+  { v: 'pbr',       l: 'PBR 全流程' },
+  { v: 'character', l: '角色灯光' },
+  { v: 'env',       l: '环境美术' }
+]
+
+function toast(msg) {
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  setTimeout(() => t.classList.remove('show'), 2000)
+}
+
+async function api(url, opts = {}) {
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', 'x-token': token, ...(opts.headers || {}) }
+  })
+  if (res.status === 401) { logout(); throw new Error('未登录') }
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || '请求失败')
+  return data
+}
+
+async function login() {
+  const password = document.getElementById('pwd').value
+  try {
+    const data = await fetch('/api/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    }).then(r => r.json())
+    if (data.token) {
+      token = data.token
+      localStorage.setItem('admin_token', token)
+      enterMain()
+    } else { toast(data.error || '密码错误') }
+  } catch (e) { toast(e.message) }
+}
+
+function logout() {
+  token = ''; localStorage.removeItem('admin_token')
+  document.getElementById('mainPage').style.display = 'none'
+  document.getElementById('loginPage').style.display = 'block'
+}
+
+async function enterMain() {
+  document.getElementById('loginPage').style.display = 'none'
+  document.getElementById('mainPage').style.display = 'block'
+  try {
+    images = await api('/api/images')
+    projects = await api('/api/projects')
+    render()
+  } catch (e) { toast(e.message) }
+}
+
+function imgUrl(name) { return name ? `/portfolio-img/${name}` : '' }
+
+function render() {
+  const list = document.getElementById('list')
+  list.innerHTML = projects.map((p, i) => renderItem(p, i)).join('')
+}
+
+function renderItem(p, i) {
+  const galleryThumbs = (p.gallery || []).map((g, gi) => `
+    <div class="thumb">
+      <img src="/src/assets/portfolio/${g}" onerror="this.style.display='none'"/>
+      <button class="x" onclick="removeGallery(${i},${gi})">×</button>
+    </div>
+  `).join('')
+
+  const imgOptions = images.map(name => `
+    <div class="pick ${p.cover === name ? 'active' : ''}"
+         onclick="setCover(${i}, '${name}')" title="${name}">
+      <img src="/src/assets/portfolio/${name}"/>
+    </div>
+  `).join('')
+
+  return `
+  <div class="card">
+    <div class="item-head">
+      <h3>#${i+1} · ${p.title || '(未命名)'}</h3>
+      <div>
+        <button class="btn gray" onclick="moveUp(${i})">↑</button>
+        <button class="btn gray" onclick="moveDown(${i})">↓</button>
+        <button class="btn red" onclick="removeProject(${i})">删除</button>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="field"><label>ID（英文，唯一）</label>
+        <input value="${esc(p.id)}" oninput="upd(${i},'id',this.value)"/></div>
+      <div class="field"><label>标题</label>
+        <input value="${esc(p.title)}" oninput="upd(${i},'title',this.value)"/></div>
+      <div class="field"><label>年份</label>
+        <input type="number" value="${p.year || 2025}" oninput="upd(${i},'year',+this.value)"/></div>
+    </div>
+
+    <div class="row">
+      <div class="field"><label>分类</label>
+        <select onchange="upd(${i},'category',this.value)">
+          ${CATEGORIES.map(c => `<option value="${c.v}" ${p.category===c.v?'selected':''}>${c.l}</option>`).join('')}
+        </select></div>
+      <div class="field"><label>表面风格 surface</label>
+        <select onchange="upd(${i},'surface',this.value)">
+          ${SURFACES.map(s => `<option value="${s}" ${p.surface===s?'selected':''}>${s}</option>`).join('')}
+        </select></div>
+      <div class="field"><label>标签（逗号分隔）</label>
+        <input value="${esc((p.tags||[]).join(','))}" oninput="updTags(${i},this.value)"/></div>
+    </div>
+
+    <div class="field full"><label>一句话标语</label>
+      <input value="${esc(p.tagline)}" oninput="upd(${i},'tagline',this.value)"/></div>
+
+    <div class="field full"><label>描述</label>
+      <textarea oninput="upd(${i},'description',this.value)">${esc(p.description)}</textarea></div>
+
+    <details>
+      <summary>📷 封面图（当前：${p.cover || '未设置'}）</summary>
+      <div class="img-picker">${imgOptions}</div>
+    </details>
+
+    <div style="height:10px"></div>
+
+    <details open>
+      <summary>🖼️ 画廊图（${(p.gallery||[]).length} 张）</summary>
+      <div class="gallery">${galleryThumbs}</div>
+      <div style="height:8px"></div>
+      <label>添加图片：</label>
+      <div class="img-picker">
+        ${images.map(name => `
+          <div class="pick" onclick="addGallery(${i},'${name}')" title="${name}">
+            <img src="/src/assets/portfolio/${name}"/>
+          </div>`).join('')}
+      </div>
+    </details>
+  </div>`
+}
+
+function esc(s) { return (s == null ? '' : String(s)).replace(/"/g, '&quot;').replace(/</g,'&lt;') }
+
+function upd(i, key, val) { projects[i][key] = val }
+function updTags(i, val) { projects[i].tags = val.split(/[,，]/).map(s=>s.trim()).filter(Boolean) }
+function setCover(i, name) { projects[i].cover = name; render() }
+function addGallery(i, name) { (projects[i].gallery ||= []).push(name); render() }
+function removeGallery(i, gi) { projects[i].gallery.splice(gi,1); render() }
+function removeProject(i) { if(confirm('确定删除？')) { projects.splice(i,1); render() } }
+function moveUp(i) { if(i>0) { [projects[i-1],projects[i]]=[projects[i],projects[i-1]]; render() } }
+function moveDown(i) { if(i<projects.length-1) { [projects[i+1],projects[i]]=[projects[i],projects[i+1]]; render() } }
+function addProject() {
+  projects.push({
+    id: 'new-' + Date.now(),
+    title: '新作品', tagline: '', description: '',
+    category: 'lighting', year: new Date().getFullYear(),
+    cover: '', surface: 'dark', gallery: [], tags: []
+  })
+  render()
+}
+
+async function save() {
+  try {
+    await api('/api/projects', { method:'POST', body: JSON.stringify(projects) })
+    toast('✅ 已保存到 projects.ts')
+  } catch (e) { toast('保存失败：' + e.message) }
+}
+
+async function publish() {
+  if (!confirm('将执行 build + git push，确定？')) return
+  const message = prompt('提交说明：', '更新作品集 ' + new Date().toLocaleString('zh-CN'))
+  if (!message) return
+  toast('🚀 发布中，请稍候（约 30 秒）...')
+  document.getElementById('logCard').style.display = 'block'
+  document.getElementById('log').textContent = '正在执行...'
+  try {
+    const data = await api('/api/publish', { method:'POST', body: JSON.stringify({ message }) })
+    document.getElementById('log').textContent = data.log
+    toast('✅ 发布成功！等几分钟刷新 GitHub Pages')
+  } catch (e) {
+    document.getElementById('log').textContent = e.message
+    toast('❌ 发布失败')
+  }
+}
+
+// 启动
+if (token) enterMain()
+else document.getElementById('loginPage').style.display = 'block'
+</script>
+</body>
+</html>
