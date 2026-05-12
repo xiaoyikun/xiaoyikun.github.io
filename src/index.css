@@ -1,0 +1,132 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ======== Apple 全局基线 ======== */
+:root {
+  color-scheme: light;
+}
+
+html, body, #root {
+  height: 100%;
+}
+
+body {
+  /* 使用 SF Pro Text 作为正文默认 */
+  font-family: 'SF Pro Text', system-ui, -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #ffffff;
+  color: #1d1d1f;
+}
+
+/* ======== Apple 组件层 ======== */
+@layer components {
+  /* 主按钮：蓝色全 pill */
+  .btn-primary {
+    @apply inline-flex items-center justify-center bg-primary text-white text-body-base rounded-pill px-[22px] py-[11px] transition-transform duration-150 ease-out;
+  }
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+  .btn-primary:focus-visible {
+    outline: 2px solid #0071e3;
+    outline-offset: 2px;
+  }
+
+  /* 次级 ghost pill */
+  .btn-secondary {
+    @apply inline-flex items-center justify-center bg-transparent text-primary text-body-base rounded-pill px-[22px] py-[11px] border border-primary/100 transition-transform duration-150 ease-out;
+  }
+  .btn-secondary:active { transform: scale(0.95); }
+
+  /* 暗色 utility（导航 Sign In/Bag） */
+  .btn-dark-utility {
+    @apply inline-flex items-center justify-center bg-ink text-white text-button-utility rounded-sm px-[15px] py-[8px] transition-transform duration-150 ease-out;
+  }
+  .btn-dark-utility:active { transform: scale(0.95); }
+
+  /* Pearl 胶囊 */
+  .btn-pearl {
+    @apply inline-flex items-center justify-center bg-pearl text-ink-muted-80 text-caption rounded-md px-[14px] py-[8px] border border-divider-soft transition-transform duration-150 ease-out;
+  }
+  .btn-pearl:active { transform: scale(0.95); }
+
+  /* 圆形 icon button（覆盖图片之上） */
+  .btn-icon-circular {
+    @apply inline-flex items-center justify-center w-11 h-11 rounded-full text-ink transition-transform duration-150 ease-out;
+    background: rgba(210, 210, 215, 0.64);
+  }
+  .btn-icon-circular:active { transform: scale(0.92); }
+
+  /* 顶部全局黑色细 nav */
+  .global-nav {
+    @apply bg-surface-black text-white text-nav-link;
+    height: 44px;
+  }
+
+  /* Frosted 子导航 */
+  .sub-nav-frosted {
+    background: rgba(245, 245, 247, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    height: 52px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.04);
+  }
+
+  /* 文本链接 */
+  .text-link { @apply text-primary; }
+  .text-link-on-dark { @apply text-primary-on-dark; }
+
+  /* Tile 通用：full-bleed，section 级垂直内边距 */
+  .tile {
+    @apply w-full px-apple-lg md:px-apple-xl py-section flex flex-col items-center justify-center text-center;
+  }
+
+  /* Utility card（store/accessories 卡片） */
+  .util-card {
+    @apply bg-canvas border border-hairline rounded-lg p-apple-lg flex flex-col;
+  }
+
+  /* Sticky bar */
+  .sticky-bar {
+    background: rgba(245, 245, 247, 0.8);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    height: 64px;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+  }
+
+  /* Search input */
+  .search-input {
+    @apply w-full bg-canvas text-ink text-body-base rounded-pill px-[20px] py-[12px] outline-none;
+    height: 44px;
+    border: 1px solid rgba(0, 0, 0, 0.08);
+  }
+  .search-input:focus { border-color: #0071e3; }
+
+  /* Tagline 标语字号 */
+  .tagline { @apply text-tagline font-display font-semibold; }
+  .display-lg { @apply text-display-lg font-display font-semibold; }
+  .hero-display { @apply text-hero-display font-display font-semibold tracking-[-0.28px]; }
+  .lead { @apply text-lead font-display font-normal; }
+  .lead-airy { @apply text-lead-airy font-text font-light; }
+}
+
+/* ======== Apple 微交互 ======== */
+.product-shadow { box-shadow: rgba(0, 0, 0, 0.22) 3px 5px 30px 0; }
+
+/* 自然滚动条优化 */
+* { box-sizing: border-box; }
+
+/* 响应式 hero 字号 */
+@media (max-width: 1068px) {
+  .hero-display { font-size: 40px !important; }
+}
+@media (max-width: 640px) {
+  .hero-display { font-size: 34px !important; }
+  .tile { @apply py-apple-xxl; }
+}
+@media (max-width: 419px) {
+  .hero-display { font-size: 28px !important; }
+}
