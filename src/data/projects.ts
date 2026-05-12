@@ -191,7 +191,7 @@ export const projects: Project[] = [
     cover: bg("bamboo-01.png"),
     surface: "dark",
     gallery: [
-      bg("bamboo-01.png")
+
     ],
     tags: ["环境美术", "武侠", "叙事场景"]
   },
@@ -219,7 +219,7 @@ export const projects: Project[] = [
       "一组短周期的环境美术练习，专注在大关系、剪影与色彩调性，不追求完整资产产出，只追求一帧好画面。",
     category: "env",
     year: 2025,
-    cover: bg("env-01.png"),
+    cover: bg("bamboo-01.png"),
     surface: "light",
     gallery: [
       bg("env-01.png"),
