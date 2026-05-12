@@ -121,7 +121,7 @@ export const projects: Project[] = [
       "在固定场景资产下，探索从冷色、暖色叙事到戏剧化夜景等多种灯光风格，研究色温、对比、Key/Fill/Rim 三段式布光在同一构图下的情绪差异。",
     category: "relight",
     year: 2025,
-    cover: bg("bamboo-01.png"),
+    cover: bg("relight-01.png"),
     surface: "dark-2",
     gallery: [
       bg("relight-01.png"),
@@ -191,7 +191,9 @@ export const projects: Project[] = [
     cover: bg("bamboo-01.png"),
     surface: "dark",
     gallery: [
-
+      bg("bamboo-01.png"),
+      bg("env-01.png"),
+      bg("env-02.png")
     ],
     tags: ["环境美术", "武侠", "叙事场景"]
   },
@@ -210,22 +212,6 @@ export const projects: Project[] = [
       bg("church-02.png")
     ],
     tags: ["环境美术", "体积光", "废墟"]
-  },
-  {
-    id: "env-misc",
-    title: "环境美术速写",
-    tagline: "日常练习中的光影瞬间。",
-    description:
-      "一组短周期的环境美术练习，专注在大关系、剪影与色彩调性，不追求完整资产产出，只追求一帧好画面。",
-    category: "env",
-    year: 2025,
-    cover: bg("bamboo-01.png"),
-    surface: "light",
-    gallery: [
-      bg("env-01.png"),
-      bg("env-02.png")
-    ],
-    tags: ["环境美术", "速写", "色彩练习"]
   },
   {
     id: "char-light",
